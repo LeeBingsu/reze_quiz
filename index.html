@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reze's Biology Class</title>
+    <title>Reze's Biology Bomb Class</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap');
 
         :root {
-            --bg-color: #000000;
-            --chat-bg: #0a0a0a;
+            --bg-color: #050505;
+            --chat-bg: #1a1a1a;
             --accent-color: #bb86fc; /* Reze Purple */
-            --danger-color: #ff4040; /* Blood Red */
-            --bubble-bg: #1f1f1f;
-            --user-bubble-bg: #6a1b9a;
+            --danger-color: #ff4040; /* Bomb Red */
+            --bubble-user: #3700b3;
+            --bubble-reze: #2d2d2d;
             --text-main: #e0e0e0;
-            --option-bg: #2d2d2d;
+            --text-sub: #a0a0a0;
         }
 
         body {
@@ -27,53 +27,58 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            overflow: hidden;
+            overflow: hidden; /* 스크롤 방지 */
         }
 
-        .phone-container {
+        /* CRT 모니터 효과 */
+        .scanline {
             width: 100%;
-            max-width: 420px;
-            height: 100vh;
+            height: 100px;
+            z-index: 10;
+            background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(255, 255, 255, 0.04) 50%, rgba(0,0,0,0) 100%);
+            opacity: 0.1;
+            position: absolute;
+            bottom: 100%;
+            animation: scanline 10s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes scanline {
+            0% { bottom: 100%; }
+            100% { bottom: -100%; }
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 600px;
+            height: 90vh;
             background-color: var(--chat-bg);
-            box-shadow: 0 0 40px rgba(187, 134, 252, 0.15);
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(187, 134, 252, 0.3);
             display: flex;
             flex-direction: column;
             position: relative;
             overflow: hidden;
         }
 
-        /* 헤더 */
+        /* 상단 헤더 */
         .header {
-            padding: 15px 20px;
-            background-color: rgba(20, 20, 20, 0.95);
+            padding: 15px;
+            background-color: rgba(0, 0, 0, 0.5);
             border-bottom: 1px solid #333;
             display: flex;
             align-items: center;
-            z-index: 10;
-            backdrop-filter: blur(10px);
+            justify-content: space-between;
         }
 
-        .profile-pic-small {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-right: 12px;
-            border: 2px solid var(--accent-color);
-        }
-
-        .header-info h2 {
-            font-size: 1rem;
-            margin: 0;
+        .header-title {
             font-weight: 700;
-            color: #fff;
+            color: var(--accent-color);
+            font-size: 1.1rem;
         }
 
-        .header-info span {
-            font-size: 0.75rem;
-            color: var(--accent-color);
-            opacity: 0.9;
-            letter-spacing: 0.5px;
+        .status-bar {
+            font-size: 0.8rem;
+            color: var(--text-sub);
         }
 
         /* 채팅 영역 */
@@ -83,919 +88,619 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 15px;
             scroll-behavior: smooth;
-            padding-bottom: 20px;
         }
-        .chat-area::-webkit-scrollbar { width: 4px; }
-        .chat-area::-webkit-scrollbar-thumb { background: #333; }
 
-        /* 메시지 스타일 */
         .message {
-            display: flex;
-            align-items: flex-end;
-            max-width: 85%;
-            animation: slideIn 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .message.reze { align-self: flex-start; }
-        .message.user { align-self: flex-end; flex-direction: row-reverse; }
-
-        .bubble {
-            padding: 10px 15px;
-            border-radius: 18px;
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 15px;
             font-size: 0.95rem;
             line-height: 1.5;
             position: relative;
-            word-wrap: break-word;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            animation: fadeIn 0.3s ease;
         }
 
-        .reze .bubble {
-            background-color: var(--bubble-bg);
-            border-bottom-left-radius: 4px;
-            margin-left: 8px;
-            color: #ddd;
-            border-left: 2px solid var(--accent-color);
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .user .bubble {
-            background: linear-gradient(135deg, #7b1fa2, #4a148c);
-            border-bottom-right-radius: 4px;
-            margin-right: 8px;
-            color: white;
-        }
-
-        .profile-pic-chat {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            object-fit: cover;
-            flex-shrink: 0;
-            margin-bottom: 5px;
-            border: 1px solid #333;
-        }
-
-        /* 타이핑 인디케이터 */
-        .typing-indicator {
-            display: none;
-            padding: 12px;
-            background: var(--bubble-bg);
-            border-radius: 18px;
-            margin-left: 50px;
-            width: fit-content;
-            margin-bottom: 10px;
-            border-bottom-left-radius: 4px;
-        }
-        .dot {
-            height: 6px;
-            width: 6px;
-            background-color: #888;
-            border-radius: 50%;
-            display: inline-block;
-            margin: 0 2px;
-            animation: blink 1.4s infinite both;
-        }
-        .dot:nth-child(1) { animation-delay: -0.32s; }
-        .dot:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes blink { 0%, 80%, 100% { opacity: 0; } 40% { opacity: 1; } }
-
-        /* 문제 카드 */
-        .question-card {
-            background: #161616;
-            border-radius: 12px;
-            padding: 15px;
-            margin-top: 4px;
-            border: 1px solid #333;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        .question-tag {
-            font-size: 0.7rem;
-            color: var(--danger-color);
-            font-weight: bold;
-            margin-bottom: 6px;
-            display: block;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .question-text {
-            font-size: 0.95rem;
-            font-weight: 500;
+        .message.reze {
+            align-self: flex-start;
+            background-color: var(--bubble-reze);
+            border-bottom-left-radius: 2px;
             color: #fff;
-            line-height: 1.5;
+            border-left: 3px solid var(--accent-color);
         }
 
-        /* 4지선다 및 선택지 */
-        .options-container {
+        .message.user {
+            align-self: flex-end;
+            background-color: var(--bubble-user);
+            border-bottom-right-radius: 2px;
+            color: #fff;
+        }
+
+        .message.system {
+            align-self: center;
+            background-color: transparent;
+            color: var(--text-sub);
+            font-size: 0.8rem;
+            border: 1px solid #333;
+            padding: 5px 10px;
+        }
+
+        /* 입력 영역 */
+        .input-area {
+            padding: 15px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-top: 1px solid #333;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            margin-top: 8px;
-            width: 100%;
-            padding-left: 45px;
-            padding-right: 20px;
+            gap: 10px;
         }
 
-        .option-btn {
-            background-color: var(--option-bg);
-            color: #ccc;
-            border: 1px solid #444;
-            padding: 12px;
-            border-radius: 10px;
-            text-align: left;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: 0.2s;
-        }
-
-        .option-btn:hover {
-            background-color: var(--accent-color);
-            color: #000;
-            border-color: var(--accent-color);
-        }
-
-        /* 입력창 */
-        .input-area {
-            padding: 12px 15px;
-            background-color: #0f0f0f;
-            border-top: 1px solid #222;
-        }
-
-        .input-wrapper {
-            background-color: #252525;
-            border-radius: 25px;
-            padding: 4px 15px;
+        .text-input-wrapper {
             display: flex;
-            align-items: center;
-            border: 1px solid #333;
+            gap: 10px;
         }
 
         input[type="text"] {
             flex: 1;
-            background: transparent;
-            border: none;
+            padding: 12px;
+            border-radius: 25px;
+            border: 1px solid #444;
+            background-color: #222;
             color: white;
-            padding: 10px;
-            font-size: 0.95rem;
             outline: none;
+            transition: border-color 0.3s;
         }
 
-        button.send-btn {
-            background: none;
+        input[type="text"]:focus {
+            border-color: var(--accent-color);
+        }
+
+        button#send-btn {
+            background-color: var(--accent-color);
             border: none;
-            color: var(--accent-color);
+            color: black;
             font-weight: bold;
+            padding: 0 20px;
+            border-radius: 25px;
             cursor: pointer;
-            padding: 6px 10px;
-            font-size: 0.9rem;
+            transition: transform 0.1s;
         }
-        
-        button:disabled { color: #444; cursor: default; }
 
-        /* 시작 화면 */
-        .start-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.94);
+        button#send-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 객관식 옵션 버튼 */
+        .options-container {
             display: flex;
-            flex-direction: column;
+            flex-wrap: wrap;
+            gap: 8px;
             justify-content: center;
-            align-items: center;
-            z-index: 100;
-            backdrop-filter: blur(10px);
+        }
+
+        .option-btn {
+            background-color: #2d2d2d;
+            border: 1px solid var(--accent-color);
+            color: var(--text-main);
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover {
+            background-color: var(--accent-color);
+            color: black;
+        }
+
+        /* 스크롤바 커스텀 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #666;
         }
         
-        .start-img {
-            width: 110px;
-            height: 110px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid var(--accent-color);
-            margin-bottom: 20px;
-            box-shadow: 0 0 30px rgba(187, 134, 252, 0.5);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(187, 134, 252, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(187, 134, 252, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(187, 134, 252, 0); }
-        }
-
         .hidden { display: none !important; }
+
     </style>
 </head>
 <body>
-
-    <div class="phone-container">
-        <!-- 헤더 -->
+    <div class="scanline"></div>
+    <div class="game-container">
         <div class="header">
-            <img src="images-2.jpeg" alt="Reze" class="profile-pic-small">
-            <div class="header-info">
-                <h2>Reze</h2>
-                <span>Active now</span>
+            <div class="header-title">Reze's Bomb Class 💣</div>
+            <div class="status-bar">Ch. 8-14 Review</div>
+        </div>
+
+        <div class="chat-area" id="chat-box">
+            <!-- 메시지들이 여기에 추가됨 -->
+        </div>
+
+        <div class="input-area" id="input-section">
+            <!-- 객관식 버튼 영역 -->
+            <div class="options-container" id="options-box"></div>
+            
+            <!-- 주관식 입력 영역 -->
+            <div class="text-input-wrapper" id="text-input-box">
+                <input type="text" id="user-input" placeholder="답을 입력해, 덴지 군..." autocomplete="off">
+                <button id="send-btn">SEND</button>
             </div>
-        </div>
-
-        <!-- 채팅방 -->
-        <div class="chat-area" id="chat-box"></div>
-        
-        <!-- 타이핑 효과 -->
-        <div class="typing-indicator" id="typing">
-            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-        </div>
-
-        <!-- 입력창 -->
-        <div class="input-area">
-            <div class="input-wrapper">
-                <input type="text" id="answer-input" placeholder="메시지 보내기..." autocomplete="off" onkeypress="if(event.keyCode==13) checkAnswer()">
-                <button class="send-btn" id="send-btn" onclick="checkAnswer()">Send</button>
-            </div>
-        </div>
-
-        <!-- 시작 화면 -->
-        <div class="start-overlay" id="start-screen">
-            <img src="images-2.jpeg" alt="Reze" class="start-img">
-            <h2 style="color: white; margin-bottom: 10px;">Reze</h2>
-            <p style="color:#aaa; margin-bottom: 30px; text-align: center; font-size: 0.9rem;">
-                "덴지 군, 학교 같은 건 땡땡이치고<br>나랑 데이트할래?"
-            </p>
-            <button class="option-btn" style="width: auto; padding: 12px 40px; background: var(--accent-color); color: black; font-weight: bold;" onclick="startGame()">좋아</button>
         </div>
     </div>
 
     <script>
+        // ============================================================
+        // 1. 레제 대사 데이터 (캐릭터성 강화)
+        // ============================================================
+        const rezeLines = {
+            intros: [
+                "테지나~?☆ (이건 마술 같은 문제야~)", 
+                "자~ 같이 풀어볼까요~ (이 문제)", 
+                "헤이헤이☆ 마스터☆ 저와 그에게 커피... 아니 문제를☆",
+                "커피는 마셔? 머리 좀 식히고 풀어봐.", 
+                "그럼~ 밤의 학교 탐험 시작하자~☆", 
+                "자~☆ 이리 와~ 이 문제 좀 봐봐.",
+                "모르면 내가 전부 가르쳐줄게.",
+                "덴지 군? 멍하니 있지 말고.",
+                "자~ 해볼까☆",
+                "자~ 이리 와 덴지 군☆ 우리의 공부 방식을 가르쳐줄게~☆",
+                "덴지 군, 사실은 말야, 나도 학교에 다닌 적 없었어.... 그래도 이건 알아."
+            ],
+            corrects: [
+                "요시! (좋아! 정답이야!)",
+                "잡~았다 (정답을)",
+                "잡았다 잡았다 잡았다 잡았다 (정답을)",
+                "괜찮잖아요~ 아침엔 선생님도 안 오고~ (정답이니까)",
+                "너처럼 재미있는 답을 하는 사람은 처음이야☆",
+                "정답! 천재!! (세카이! 텐사이!!)",
+                "정답은~ 2개월이었습니다☆ (농담이야, 맞았어)",
+                "덴지 군을 좋아하니까 정답 처리 해줄게.",
+                "머리 회전 빠르네! (발 빠르네)",
+                "좋은 '한 방'이었어. (이이 케리닷타요)",
+                "덴지 군을 좋아한다고 했던 건 진짜야~ (정답 축하해)",
+                "아! 정답이다☆"
+            ],
+            wrongs: [
+                "에? 나보다 빨리 풀었다며~? 틀렸잖아.",
+                "ㅋㅋㅋ어린애네 어린애ㅋㅋㅋ (이걸 틀려?)",
+                "바보 입맛~ (답 고르는 센스가 없어)",
+                "덴지 군은 문제도 못 읽어? (칸지 요메나이노)",
+                "덴지 군도 머리 좀 비워봐~ (오답)",
+                "우리를 여기에 가두고 있는 건 너지? 태풍 (오답의 늪)",
+                "덴지 군은 내 문제 싫어해?",
+                "덴지 군, 공부 말고 좋아하는 사람 있지?",
+                "틀렸으니까... 아픈 꼴 당하게 해서 미안?",
+                "틀렸네. 덴지 군의 심장 받아갈게?",
+                "도둑놈 (점수 도둑)",
+                "솔직하게 덴지 군을 놔두고 간다면(포기하면) 놓아줄게",
+                "틀리면 몰살 코스려나☆",
+                "내 힘을 보여주기 위해 죽였어 (너의 점수를)",
+                "틀린 답안은 통구이가 되어버리니까~☆",
+                "덴지 군 응용이 부족하네~☆",
+                "덴지 군 되살려낸 걸 후회하게 해줄게 (오답 지옥)",
+                "덴지 군, 이제 포기해주지 않을려나☆",
+                "덴지 군은 조금 더 똑똑해지는 편이 좋아.",
+                "왜 처음 만났을 때 죽이지 못했던 걸까 (이렇게 멍청한데)",
+                "마키마? 덴지 군 저 마녀에게 배우고 있었던 거야? 그럼 틀려도 어쩔 수 없네."
+            ],
+            chats: [
+                "비 그쳤어~☆ (집중해)",
+                "절대 와야 해! (다음 문제로)",
+                "비다 비~ (눈물인가?)",
+                "늘어나네요 (오답이)",
+                "꺄아아아아아아아아아아아 (틀렸어!!)",
+                "(러시아 동요를 흥얼거림)",
+                "나랑 도망치지 않을래? (공부 따위)",
+                "으엣?! (그게 답이야?)",
+                "BOOM☆ (틀렸어)",
+                "민간 데빌헌터려나? 실력이 형편없네.",
+                "도와주세요! 악마 같은 문제에게 습격당하고 있어요!",
+                "아아~ 안되려나~ 역시 안되나",
+                "피? (코피 나?)",
+                "일본은 펜을 쓸 때 허가제야? 왜 안 써?",
+                "☆붐☆",
+                "잠깐 타임☆타임☆, 이쪽은 혼자에 반쯤 알몸, 그쪽은 둘이잖아? (너무 어렵잖아)",
+                "타임 아웃☆",
+                "(내 다리) 으앗! (실수했다)",
+                "정말~ 엉망진창이다~....",
+                "체인?! (아니야)",
+                "믿을 수 없어 (이걸 틀리다니)",
+                "왜 나를(이 문제를) 되살린 거야?",
+                "나는 도망칠 거니까 (다음 문제로)",
+                "뭐야 그게☆"
+            ]
+        };
+
+        // ============================================================
+        // 2. 문제 데이터 (8~14단원 핵심 및 심화)
+        // ============================================================
         const questionBank = [
-            // --- 8단원 (8문제) ---
+             // [8단원: DNA와 세포]
             {
                 category: "8단원: DNA 구조",
-                question: "DNA가 히스톤 단백질을 감싸고 있는 구슬 모양의 단위.",
+                question: "DNA가 히스톤 단백질을 감싸고 있는 구슬 모양의 기본 단위는?",
                 answers: ["뉴클레오솜", "nucleosome"],
                 options: ["뉴클레오솜", "리보솜", "염색사", "뉴클레오타이드"],
-                wrong_context: {
-                    "리보솜": "리보솜은 단백질 만드는 공장이잖아. 이건 염색체 얘기야.",
-                    "염색사": "염색사는 풀어져 있는 상태고. 이걸 구성하는 단위 말이야.",
-                    "뉴클레오타이드": "그건 DNA의 기본 단위고. 너무 작잖아."
-                },
-                intro: "내 목걸이 핀을 뽑으면 어떻게 되는지 알아? 펑- 하고 터져.",
-                correct: "정답이야. 넌 내 손바닥 안에서 벗어날 수 없어. 💋",
-                wrong: "틀렸어. 죽고 싶어?"
+                wrong_context: { "리보솜": "단백질 공장이랑 헷갈리지 마.", "염색사": "그건 실처럼 풀어진 상태야." }
             },
             {
                 category: "8단원: 세포 주기",
-                question: "세포 주기 중 DNA가 복제되는 시기.",
-                answers: ["S기", "S"],
+                question: "세포 주기 중 DNA 복제가 일어나는 시기는?",
+                answers: ["S기", "S phase"],
                 options: ["G1기", "S기", "G2기", "M기"],
-                wrong_context: {
-                    "G1기": "G1은 준비 시간. 복제는 그 다음이야.",
-                    "G2기": "G2는 복제 끝나고 점검하는 시간.",
-                    "M기": "M기는 분열하는 시간이야. 바보."
-                },
-                intro: "밤은 길어. 우리 둘만의 시간(Synthesis)을 가져볼까?",
-                correct: "S기. 잘했어. 진짜 레제는 나 하나뿐이야.",
-                wrong: "아니야. 딴 여자 생각했지? 눈 뽑아버린다?"
+                wrong_context: { "M기": "분열하느라 바빠서 복제 못 해.", "G1기": "아직 준비 중이야." }
             },
             {
                 category: "8단원: 세포 분열",
-                question: "체세포 분열 중기 때 염색체가 일렬로 배열되는 장소.",
+                question: "세포 분열 중기(Metaphase)에 염색체가 배열되는 곳은?",
                 answers: ["적도판", "적도면"],
-                options: ["적도판", "극", "중심체", "세포판"],
-                wrong_context: {
-                    "극": "극은 양쪽 끝이고. 가운데라니까.",
-                    "중심체": "중심체는 방추사 만드는 애고."
-                },
-                intro: "내 눈을 피하지 마. 날 똑바로 보라고. 가운데에서.",
-                correct: "적도판. 그래, 거기 가만히 있어.",
-                wrong: "거기가 아니야. 내 눈을 보라니까?"
+                options: ["적도판", "극지방", "핵막", "세포질"],
+                wrong_context: { "극지방": "거긴 방추사가 시작되는 곳.", "핵막": "중기엔 이미 핵막 사라졌어." }
             },
             {
-                category: "8단원: 종양",
-                question: "암세포가 혈관을 타고 온몸으로 퍼지는 현상.",
-                answers: ["전이", "metastasis"],
-                options: ["전이", "침윤", "분열", "세포 사멸"],
-                wrong_context: { "침윤": "침윤은 주변 조직 파고드는 거고. 이건 멀리 가는 거야." },
-                intro: "난 어디든 갈 수 있어. 네 심장 속까지 파고들 거야.",
-                correct: "전이. 이제 넌 내 거야. 뼛속까지.",
-                wrong: "도망칠 수 있을 거라 생각했어?"
+                category: "8단원: 세포 사멸",
+                question: "손상된 세포가 스스로 죽음을 선택하는 '세포 예정사'는?",
+                answers: ["아폽토시스", "apoptosis"],
+                options: ["아폽토시스", "괴사", "종양", "분화"],
+                wrong_context: { "괴사": "그건 사고로 터지는 거고, 이건 '자살'이야.", "종양": "죽지 않고 버티면 암이 되지." }
             },
             {
-                category: "8단원: 종양",
-                question: "암세포가 죽지 않게 염색체 끝을 계속 복구해주는 효소.",
-                answers: ["텔로머라아제", "telomerase"],
-                options: ["텔로머라아제", "중합효소", "헬리카아제", "연결효소"],
-                wrong_context: { "중합효소": "그건 DNA 복제하는 효소고... 끝부분을 보호하는 거라고." },
-                intro: "나랑 영원히 함께하고 싶어? 죽지 않는 악마처럼.",
-                correct: "텔로머라아제. 좋아. 지옥 끝까지 함께하자.",
-                wrong: "효소 이름도 못 외우면 자격 없어."
-            },
-            {
-                category: "8단원: 세포 분열",
-                question: "동물 세포 분열 시 방추사가 뻗어 나오는 세포 소기관.",
-                answers: ["중심체", "centrosome"],
-                options: ["중심체", "미토콘드리아", "리보솜", "골지체"],
-                wrong_context: { "골지체": "골지체는 세포판 만들 때나 쓰지." },
-                intro: "내가 네 중심이 되어줄게. 넌 그냥 끌려오면 돼.",
-                correct: "중심체. 맞아. 넌 나한테 끌려오게 돼 있어.",
-                wrong: "미토콘드리아는 에너지 만드는 거고. 바보."
+                category: "8단원: 암(Cancer)",
+                question: "정상 세포가 암세포로 변하는 과정에서, 세포 분열을 억제하는 유전자는?",
+                answers: ["종양 억제 유전자", "tumor suppressor gene"],
+                options: ["종양 억제 유전자", "원암 유전자", "종양 유전자", "성장 인자"],
+                wrong_context: { "원암 유전자": "그건 엑셀을 밟는 놈이고. 브레이크를 묻는 거야." }
             },
 
-            // --- 9단원 (6문제) ---
+            // [9단원: 감수분열]
             {
                 category: "9단원: 감수분열",
-                question: "1분열 전기 때 상동 염색체끼리 유전자를 교환하는 현상.",
+                question: "감수 1분열 전기, 상동 염색체끼리 접합하여 형성되는 것은?",
+                answers: ["2가 염색체", "4분 염색체"],
+                options: ["2가 염색체", "염색분체", "방추사", "동원체"],
+                wrong_context: { "염색분체": "그건 그냥 반쪽이잖아." }
+            },
+            {
+                category: "9단원: 유전자 재조합",
+                question: "감수 1분열 전기, 상동 염색체 사이에서 유전자가 교환되는 현상은?",
                 answers: ["교차", "crossing over"],
-                options: ["교차", "접합", "분리", "수정"],
-                wrong_context: { "접합": "접합은 그냥 붙는 거고, 이건 섞이는 거야." },
-                intro: "수영할 줄 알아? 물속에서 숨 막힐 때까지 섞여보자.",
-                correct: "교차. 우린 이미 하나가 된 거야.",
-                wrong: "틀렸어. 물 먹고 정신 좀 차릴래?"
+                options: ["교차", "접합", "복제", "독립"],
+                wrong_context: { "접합": "붙는 건 접합, 섞는 건 교차. 구분 못 해?" }
             },
             {
-                category: "9단원: 감수분열",
-                question: "상동 염색체가 접합하여 형성된 4분체 구조.",
-                answers: ["2가 염색체", "이가 염색체"],
-                options: ["2가 염색체", "상동 염색체", "염색분체", "방추사"],
-                wrong_context: { "상동 염색체": "상동 염색체 두 개가 붙은 거라니까." },
-                intro: "떨어지기 싫어. 날 꽉 안아줘. 뼈가 부서질 정도로.",
-                correct: "2가 염색체. 절대 놓지 마.",
-                wrong: "그냥 염색체라고 하면 섭섭해."
+                category: "9단원: 유전적 다양성",
+                question: "감수 1분열 중기, 상동 염색체의 무작위 배열은 무엇을 증가시키는가?",
+                answers: ["유전적 다양성", "다양성"],
+                options: ["유전적 다양성", "세포 크기", "염색체 수", "DNA 양"],
+                wrong_context: { "염색체 수": "수가 늘어나면 돌연변이야." }
             },
             {
                 category: "9단원: 염색체 이상",
-                question: "21번 염색체가 3개인 유전 질환.",
-                answers: ["다운 증후군", "다운증후군"],
-                options: ["다운 증후군", "에드워드 증후군", "터너 증후군", "클라인펠터 증후군"],
-                wrong_context: { "에드워드": "에드워드는 18번이야." },
-                intro: "남들과 다르면 괴물 취급을 받지. 너도, 나도.",
-                correct: "다운 증후군. 맞아. 우린 서로를 이해할 수 있어.",
-                wrong: "숫자도 못 세는 거야?"
-            },
-            {
-                category: "9단원: 염색체 이상",
-                question: "성염색체가 XXY인 남성.",
-                answers: ["클라인펠터 증후군", "클라인펠터"],
-                options: ["클라인펠터", "터너 증후군", "초여성 증후군", "야콥 증후군"],
-                wrong_context: { "터너": "터너는 X 하나뿐인 여자야." },
-                intro: "남자인지 여자인지... 경계에 있는 건 슬픈 일일까?",
-                correct: "클라인펠터. 맞아.",
-                wrong: "헷갈리지 마. 이건 남자야."
-            },
-            {
-                category: "9단원: 염색체 이상",
-                question: "감수 1분열 비분리가 일어나면, 자손의 핵상은 어떻게 될까?",
-                answers: ["모두 비정상", "전부 비정상"],
-                options: ["모두 정상", "모두 비정상", "절반만 정상", "알 수 없음"],
-                wrong_context: { "절반": "그건 2분열 비분리잖아. 1분열은 처음부터 망한 거야." },
-                intro: "처음부터 잘못됐으면... 되돌릴 수 있을까?",
-                correct: "모두 비정상. 맞아. 처음부터 망가졌으면 끝이지.",
-                wrong: "아니야. 처음부터 잘못됐으면 전부 망하는 거야."
+                question: "다운 증후군처럼 염색체 수가 정상보다 많거나 적은 돌연변이 원인은?",
+                answers: ["비분리", "nondisjunction"],
+                options: ["비분리", "결실", "중복", "전좌"],
+                wrong_context: { "결실": "그건 잘려 나간 거고. 이건 헤어지지 못한 거야." }
             },
 
-            // --- 10단원 (8문제) ---
+            // [10단원: 유전의 패턴]
             {
                 category: "10단원: 멘델 유전",
-                question: "우성 개체의 속마음을 알기 위해 열성 순종과 교배하는 것.",
+                question: "우성 개체의 유전자형을 알기 위해 열성 순종 개체와 교배하는 것은?",
                 answers: ["검정 교배", "검정교배"],
                 options: ["검정 교배", "자가 교배", "타가 교배", "역교배"],
-                wrong_context: { "자가 교배": "자기끼리 하는 게 아니야. 속을 보려면 다른 상대가 필요해." },
-                intro: "네 심장을 꺼내보면 알 수 있을까? 네가 날 사랑하는지.",
-                correct: "검정 교배. 넌 날 위해서라면 죽을 수도 있구나? ❤️",
-                wrong: "거짓말쟁이. 혀를 잘라버릴 거야."
+                wrong_context: { "자가 교배": "자기 혼자서 뭘 어쩌게?" }
             },
             {
-                category: "10단원: 예외 유전",
-                question: "ABO식 혈액형처럼 대립유전자가 3개 이상인 유전.",
+                category: "10단원: 비멘델 유전",
+                question: "ABO식 혈액형처럼 3개 이상의 대립유전자가 관여하는 유전은?",
                 answers: ["복대립 유전", "복대립"],
                 options: ["복대립 유전", "다인자 유전", "중간 유전", "반성 유전"],
-                wrong_context: { "다인자": "다인자는 자리가 여러 개인 거고, 이건 후보가 많은 거야." },
-                intro: "나야, 마키마야, 아니면 파워야? 여자가 너무 많잖아.",
-                correct: "복대립 유전. 하지만 선택은 하나야. 나를 골라.",
-                wrong: "핑계 대지 마. 선택은 단순해."
-            },
-            {
-                category: "10단원: 예외 유전",
-                question: "분꽃의 붉은색과 흰색이 섞여 분홍색이 나오는 현상.",
-                answers: ["불완전 우성", "중간 유전"],
-                options: ["불완전 우성", "공동 우성", "완전 우성", "열성"],
-                wrong_context: { "공동": "공동 우성은 얼룩무늬처럼 따로 나오는 거야." },
-                intro: "확실하게 해. 섞이는 건 싫어. (사실은 좋아하지만)",
-                correct: "불완전 우성. 그래, 가끔은 섞이는 것도 나쁘지 않지.",
-                wrong: "섞이는 거랑 따로 나오는 건 다르다고."
+                wrong_context: { "다인자 유전": "그건 키나 피부색 같은 거고." }
             },
             {
                 category: "10단원: 연관 유전",
-                question: "두 유전자가 같은 염색체에 있어 같이 이동하는 현상.",
-                answers: ["연관", "linkage"],
-                options: ["연관", "교차", "독립", "분리"],
-                wrong_context: { "교차": "교차는 연관을 끊을 수 있는 행위고." },
-                intro: "내가 지옥에 가면 너도 따라올 거지?",
-                correct: "연관. 맞아. 묶여있으니까. 넌 내 짐이야.",
-                wrong: "독립은 따로 노는 거고. 우린 하나라니까?"
+                question: "하나의 유전자가 여러 가지 형질에 동시에 영향을 미치는 현상은?",
+                answers: ["다면 발현", "pleiotropy"],
+                options: ["다면 발현", "다인자 유전", "중간 유전", "공동 우성"],
+                wrong_context: { "다인자 유전": "반대야. 그건 여러 유전자가 하나를 만드는 거고." }
             },
             {
-                category: "10단원: 멘델 유전",
-                question: "서로 다른 형질을 결정하는 유전자는 독립적으로 유전된다는 법칙.",
-                answers: ["독립의 법칙"],
-                options: ["독립의 법칙", "분리의 법칙", "우열의 원리", "연관 법칙"],
-                wrong_context: { "분리": "분리의 법칙은 한 형질 안에서 일어나는 거야." },
-                intro: "난 누구에게도 얽매이지 않아. 자유롭고 싶어.",
-                correct: "독립의 법칙. 하지만 넌 나한테 얽매여야 해.",
-                wrong: "헷갈리지 마. 이건 다른 형질 얘기야."
+                category: "10단원: 성염색체 유전",
+                question: "X 염색체 유전자에 의한 유전(예: 적록 색맹)을 무엇이라 하는가?",
+                answers: ["반성 유전", "sex linked inheritance"],
+                options: ["반성 유전", "한성 유전", "상염색체 유전", "모계 유전"],
+                wrong_context: { "한성 유전": "그건 Y 염색체. 남자만 걸리는 거고." }
             },
 
-            // --- 12단원 (7문제) ---
+            // [12단원: 진화를 이끄는 힘]
             {
                 category: "12단원: 하디-바인베르크",
-                question: "유전자 빈도가 변하지 않으려면 교배가 '이것'이어야 해.",
-                answers: ["무작위", "무작위 교배", "random"],
-                options: ["무작위", "선택적", "인위적", "동계"],
-                wrong_context: {},
-                intro: "우리가 만난 건 운명 따위가 아니야. 그냥 우연이지.",
-                correct: "무작위. 맞아. 계산된 사랑은 역겨워. 본능에 맡겨.",
-                wrong: "의도적인 건 재미없어."
+                question: "진화가 일어나지 않는 가상의 이상적인 집단을 무엇이라 하는가?",
+                answers: ["멘델 집단", "Mendelian population"],
+                options: ["멘델 집단", "소진화 집단", "창시자 집단", "유전자 풀"],
+                wrong_context: { "유전자 풀": "그건 유전자의 총합이고." }
             },
             {
-                category: "12단원: 소진화",
-                question: "소수가 이주하여 새 집단을 만들 때 유전자 빈도가 급변하는 현상.",
-                answers: ["창시자 효과", "founder effect"],
-                options: ["창시자 효과", "병목 효과", "자연 선택", "돌연변이"],
-                wrong_context: { "병목": "병목 효과는 재난으로 죽고 남은 거고." },
-                intro: "도망치자. 아무도 없는 곳으로 가서 우리 둘만의 나라를 만드는 거야.",
-                correct: "창시자 효과. 우리가 그곳의 아담과 이브가 되는 거지.",
-                wrong: "헷갈리지 마. 이건 이민 가는 거야."
+                category: "12단원: 유전적 부동",
+                question: "화재나 홍수 등 급격한 환경 변화로 집단 크기가 줄어 유전자 빈도가 변하는 것은?",
+                answers: ["병목 효과", "bottleneck effect"],
+                options: ["병목 효과", "창시자 효과", "자연 선택", "유전자 흐름"],
+                wrong_context: { "창시자 효과": "그건 몇 놈이 도망가서 새로 만드는 거고." }
             },
             {
-                category: "12단원: 소진화",
-                question: "재해로 집단 크기가 급격히 줄어 유전자 빈도가 변하는 현상.",
-                answers: ["병목 효과", "bottleneck"],
-                options: ["병목 효과", "창시자 효과", "유전자 흐름", "돌연변이"],
-                wrong_context: { "창시자": "창시자 효과랑 반대야. 이건 재난이라고." },
-                intro: "다 죽어버리고 우리 둘만 남는다면... 그건 축복일까 저주일까?",
-                correct: "병목 효과. 살아남은 게 기적이지.",
-                wrong: "다시 생각해봐. 재난이야."
-            },
-            {
-                category: "12단원: 자연선택",
-                question: "한쪽 극단적인 형질이 유리해서 그쪽으로 진화하는 유형.",
-                answers: ["방향성 선택", "directional"],
-                options: ["방향성 선택", "안정화 선택", "분단성 선택", "성 선택"],
-                wrong_context: { "안정화": "안정화는 중간만 남는 거고. 이건 한쪽으로 쏠리는 거야." },
-                intro: "난 멈추는 법을 몰라. 끝까지 갈 거야. 파멸할 때까지.",
-                correct: "방향성 선택. 그래프가 한쪽으로 쏠리지.",
-                wrong: "안정적인 건 재미없어. 극단적으로 가자."
-            },
-            {
-                category: "12단원: 자연선택",
-                question: "양 극단 형질이 유리하고 중간이 도태되는 선택.",
-                answers: ["분단성 선택", "disruptive"],
-                options: ["분단성 선택", "안정화 선택", "방향성 선택", "성 선택"],
-                wrong_context: { "안정화": "안정화 선택의 정반대야." },
-                intro: "너와 나처럼... 극과 극인 존재들만 살아남는 세상.",
-                correct: "분단성 선택. 결국 둘로 찢어지겠지.",
-                wrong: "어중간한 건 죽는 거야."
-            },
-            {
-                category: "12단원: 소진화",
-                question: "집단 간에 개체가 이동하여 유전자 빈도가 변하는 현상. 이주.",
-                answers: ["유전자 흐름", "gene flow"],
-                options: ["유전자 흐름", "유전적 부동", "자연 선택", "돌연변이"],
-                wrong_context: { "부동": "부동은 우연한 변화야. 이건 이동하는 거고." },
-                intro: "내가 너에게 흘러들어가면... 넌 변하게 될까?",
-                correct: "유전자 흐름. 섞이면 차이가 줄어들어.",
-                wrong: "흐름(Flow)이라고. 물처럼."
+                category: "12단원: 자연 선택",
+                question: "신생아 몸무게처럼 양극단은 도태되고 중간 형질이 선택되는 것은?",
+                answers: ["안정적 선택", "stabilizing selection"],
+                options: ["안정적 선택", "방향적 선택", "분단적 선택", "성 선택"],
+                wrong_context: { "방향적 선택": "그건 한쪽으로 쏠리는 거야. 기린 목처럼." }
             },
 
-            // --- 13단원 (7문제) ---
+            // [13단원: 진화의 증거]
             {
                 category: "13단원: 비교해부학",
-                question: "새의 날개와 곤충의 날개. 기원은 다르지만 겉모습만 비슷한 가짜들.",
-                answers: ["상사 기관", "상사기관"],
-                options: ["상사 기관", "상동 기관", "흔적 기관", "유사 기관"],
-                wrong_context: { "상동": "상동 기관은 핏줄이 같은 거야. 이건 남남이라고." },
-                intro: "마키마 씨가 좋아, 내가 좋아? 겉모습만 보지 말고.",
-                correct: "상사 기관. 겉모습만 닮은 가짜는 필요 없어.",
-                wrong: "틀렸어. 난 그 여자랑 달라."
+                question: "기원은 같으나 기능이 달라진 기관 (예: 사람 팔, 고래 지느러미)은?",
+                answers: ["상동기관", "homologous structures"],
+                options: ["상동기관", "상사기관", "흔적기관", "유사기관"],
+                wrong_context: { "상사기관": "그건 기원이 다른 거야." }
             },
             {
                 category: "13단원: 비교해부학",
-                question: "사람 팔과 고래 앞지느러미. 겉모습은 달라도 뼈대(기원)는 같은 기관.",
-                answers: ["상동 기관", "상동기관"],
-                options: ["상동 기관", "상사 기관", "흔적 기관", "유사 기관"],
-                wrong_context: { "상사": "상사 기관이랑 반대야. 겉만 보지 말고 속을 봐." },
-                intro: "우린 겉모습은 달라도... 속은 똑같이 망가져 있어.",
-                correct: "상동 기관. 맞아. 우린 통하는 게 있어.",
-                wrong: "다시 생각해봐. 뿌리는 같아."
+                question: "곤충 날개와 새 날개처럼, 기원은 다르지만 기능이 같아진 기관은?",
+                answers: ["상사기관", "analogous structures"],
+                options: ["상사기관", "상동기관", "흔적기관", "상동 염색체"],
+                wrong_context: { "상동기관": "그건 겉은 달라도 속(기원)이 같은 거고." }
             },
-            {
-                category: "13단원: 흔적 기관",
-                question: "과거엔 기능이 있었으나 퇴화해 흔적만 남은 기관.",
-                answers: ["흔적 기관", "흔적기관"],
-                options: ["흔적 기관", "상동 기관", "상사 기관", "유사 기관"],
-                wrong_context: { "상동": "상동 기관은 기능이 있잖아." },
-                intro: "내 마음에도... 인간이었던 시절의 감정이 남아있을까?",
-                correct: "흔적 기관. 꼬리뼈처럼... 아프기만 한 존재.",
-                wrong: "쓸모없어진 게 포인트야."
-            },
-            {
-                category: "13단원: 분자생물학",
-                question: "모든 생물이 같은 유전 암호(코돈)를 쓴다는 건, 우리가 하나의 '이것'에서 나왔다는 증거.",
-                answers: ["공통 조상", "common ancestor"],
-                options: ["공통 조상", "수렴 진화", "자연 선택", "이소적 종분화"],
-                wrong_context: {},
-                intro: "너랑 나, 그리고 저 벌레도... 아주 먼 옛날엔 가족이었을지도 몰라.",
-                correct: "공통 조상. 모든 건 하나로 연결돼 있어.",
-                wrong: "뿌리를 묻는 거야."
-            },
-            {
-                category: "13단원: 화석상 증거",
-                question: "시조새처럼 두 분류군(파충류-조류)의 특징을 모두 가진 화석.",
-                answers: ["전이 화석", "중간 화석"],
-                options: ["전이 화석", "표준 화석", "시상 화석", "흔적 화석"],
-                wrong_context: { "시상": "시상 화석은 환경을 알려주는 거고." },
-                intro: "난 인간일까 악마일까? 그 중간 어디쯤일까?",
-                correct: "전이 화석. 연결 고리 같은 거지.",
-                wrong: "다리 역할을 하는 화석 말이야."
-            },
-            
-            // --- 14단원 (9문제) ---
+
+            // [14단원: 종분화와 멸종]
             {
                 category: "14단원: 종분화",
-                question: "지리적 장벽에 의해 멀리 떨어져서 일어나는 종분화.",
-                answers: ["이소적 종분화", "allopatric"],
-                options: ["이소적 종분화", "동소적 종분화", "점진적 종분화", "단속 평형"],
-                wrong_context: { "동소적": "동소적은 같이 사는 거고. 이건 멀리 떨어져서." },
-                intro: "내가 러시아로 돌아가면... 넌 날 잊을 거지?",
-                correct: "이소적 종분화. 하지만 넌 예외야. 끝까지 쫓아갈 거니까.",
-                wrong: "틀렸어. 넌 내 거라는 걸 잊지 마."
+                question: "지리적 장벽(산맥, 바다)에 의해 격리되어 일어나는 종분화는?",
+                answers: ["이소적 종분화", "allopatric speciation"],
+                options: ["이소적 종분화", "동소적 종분화", "배수성 종분화", "단속 평형설"],
+                wrong_context: { "동소적 종분화": "그건 같은 장소에서 일어나는 거야." }
             },
             {
                 category: "14단원: 생식적 장벽",
-                question: "생식기 구조가 맞지 않아 교배할 수 없는 격리.",
-                answers: ["기계적 격리", "mechanical"],
-                options: ["기계적 격리", "행동적 격리", "시간적 격리", "배우자 격리"],
-                wrong_context: { "행동적": "행동적 격리는 춤추는 거고. 이건 물리적인 문제야." },
-                intro: "열쇠가 자물쇠에 안 맞으면 어떻게 할 거야? 부숴버릴 거야?",
-                correct: "기계적 격리. 몸의 대화가 안 통하면... 죽을 때까지 싸우자.",
-                wrong: "다시 생각해봐. 물리적인 이유야."
-            },
-            {
-                category: "14단원: 종분화",
-                question: "같은 장소에 살지만 생식적으로 격리되어 분화하는 현상.",
-                answers: ["동소적 종분화", "sympatric"],
-                options: ["동소적 종분화", "이소적 종분화", "지리적 격리", "창시자 효과"],
-                wrong_context: { "이소적": "이소적은 멀리 떨어진 거야. 넌 내 옆에 있잖아." },
-                intro: "이렇게 가까이 있는데... 왜 넌 날 안 봐?",
-                correct: "동소적 종분화. 가까워도 먼 사이. 슬프네.",
-                wrong: "같은 장소라고 했잖아."
-            },
-            {
-                category: "14단원: 멸종",
-                question: "대멸종 이후 살아남은 종이 빈자리를 차지하며 급격히 다양해지는 현상.",
-                answers: ["적응 방산", "adaptive radiation"],
-                options: ["적응 방산", "대멸종", "수렴 진화", "공진화"],
-                wrong_context: { "수렴": "수렴은 모이는 거고, 이건 퍼지는 거야." },
-                intro: "다 죽여버리고 나면... 세상은 우리 차지가 될 거야.",
-                correct: "적응 방산. 위기는 기회야. 내 손을 잡아.",
-                wrong: "방산(Radiation)처럼 퍼져나가는 거야."
-            },
-            {
-                category: "14단원: 종의 개념",
-                question: "생물학적 종의 정의. 자연 상태에서 교배하여 '이것' 있는 자손을 낳아야 한다.",
-                answers: ["생식 능력", "생식능력"],
-                options: ["생식 능력", "생존 능력", "적응력", "변이"],
-                wrong_context: { "생존": "살아만 있다고 다가 아니야." },
-                intro: "사랑의 결실이... 또 다른 사랑을 낳을 수 있어야 진짜야.",
-                correct: "생식 능력. 불임이면 종이 아니야. 슬프지만.",
-                wrong: "다시 생각해. 후손을 남길 수 있느냐는 거야."
+                question: "서로 다른 구애 행동(노래, 춤) 때문에 교배가 안 되는 격리는?",
+                answers: ["행동적 격리", "behavioral isolation"],
+                options: ["행동적 격리", "시간적 격리", "기계적 격리", "생태적 격리"],
+                wrong_context: { "시간적 격리": "그건 밤낮이나 계절이 다른 거고." }
             },
             {
                 category: "14단원: 생식적 장벽",
-                question: "구애 행동이나 신호가 달라서 짝짓기가 안 되는 격리.",
-                answers: ["행동적 격리", "behavioral"],
-                options: ["행동적 격리", "시간적 격리", "기계적 격리", "배우자 격리"],
-                wrong_context: { "시간적": "시간적 격리는 밤낮이 다른 거고." },
-                intro: "내가 윙크를 했는데 네가 못 알아먹으면... 죽여버릴 거야.",
-                correct: "행동적 격리. 신호가 안 맞으면 남남이지.",
-                wrong: "행동! Action! 알겠어?"
+                question: "수정 후 장벽 중, 잡종(F1)은 태어나지만 생식 능력이 없는 현상은? (예: 노새)",
+                answers: ["잡종 불임", "hybrid sterility"],
+                options: ["잡종 불임", "잡종 붕괴", "잡종 사멸", "배수성"],
+                wrong_context: { "잡종 붕괴": "그건 F1은 괜찮은데 F2부터 죽는 거야." }
             },
             {
-                category: "14단원: 생식적 장벽",
-                question: "잡종 1대는 정상인데 2대부터 약하거나 불임이 되는 현상.",
-                answers: ["잡종 붕괴", "hybrid breakdown"],
-                options: ["잡종 붕괴", "잡종 불임", "잡종 생존력 저하", "배우자 격리"],
-                wrong_context: { "불임": "잡종 불임은 1대부터 불임인 거야." },
-                intro: "처음엔 괜찮은 줄 알았는데... 갈수록 망가져가는 관계.",
-                correct: "잡종 붕괴. 결국은 파국이네.",
-                wrong: "붕괴(Breakdown)라는 단어를 기억해."
+                category: "14단원: 진화 속도",
+                question: "진화가 짧은 시기에 급격히 일어나고, 그 후 오랫동안 변화가 없다는 이론은?",
+                answers: ["단속 평형설", "punctuated equilibrium"],
+                options: ["단속 평형설", "점진론", "용불용설", "자연 선택설"],
+                wrong_context: { "점진론": "천천~히 변하는 건 다윈 아저씨 생각이고." }
             }
         ];
 
-        // 2. 사담 데이터... (생략, 이전 코드와 동일)
+        // 채팅 에피소드
         const chatEpisodes = [
-            {
-                text: "그나저나 덴지 군, 시골 쥐랑 도시 쥐 이야기 알아? <br>넌 어느 쪽이 좋아?",
-                options: ["시골 쥐", "도시 쥐", "너랑 함께라면 어디든"],
-                replies: {
-                    "시골 쥐": "흐음... 평온한 삶을 원해?",
-                    "도시 쥐": "맛있는 걸 먹지만 언제 죽을지 모르는 삶... 그렇구나..",
-                    "너랑 함께라면 어디든": "아하하! 정답이야. 덴지 군은 가끔 귀여운 소리를 한다니까."
-                }
-            },
-            {
-                text: "마키마 씨 말이야... 냄새가 나. <br>아주 나쁜 '개' 냄새가 난다고 생각하지 않아?",
-                options: ["마키마 씨는 좋아", "난 코가 막혀서", "네 냄새가 더 좋아"],
-                replies: {
-                    "마키마 씨는 좋아": "칫. 재미없어. 그 여자한테 먹혀버려라.",
-                    "난 코가 막혀서": "바보. 언제쯤 눈치챌래? 조심하는 게 좋을 거야.",
-                    "네 냄새가 더 좋아": "어라? 대담하네. 내 냄새는 화약 냄새일 텐데? 후후."
-                }
-            },
-            {
-                text: "학교 축제 가본 적 있어? <br>난 학교에 다녀본 적이 없어서... 좀 궁금해.",
-                options: ["나도 안 가봤어", "다음에 같이 가자", "별거 없어"],
-                replies: {
-                    "나도 안 가봤어": "우린 참 닮은 점이 많네. 그래서 네가 좋아.",
-                    "다음에 같이 가자": "약속했다? 사과 사탕도 사주고, 불꽃놀이도 보여줘야 해.",
-                    "별거 없어": "덴지 군이랑 가면 다를지도 모르잖아. 시시하긴."
-                }
-            },
-            {
-                text: "저기, 덴지 군. 영화 좋아해? <br>난 다 죽어버리는 영화가 좋더라.",
-                options: ["나도 좋아해", "난 해피엔딩이 좋아", "액션 영화가 좋아"],
-                replies: {
-                    "나도 좋아해": "역시! 파멸적인 결말이 아름답지. 우리처럼.",
-                    "난 해피엔딩이 좋아": "해피엔딩이라... 꿈같은 소리네. 뭐, 노력은 해볼게.",
-                    "액션 영화가 좋아": "그럼 내가 폭발하는 거 보여줄까? 최고의 액션일걸?"
-                }
-            },
-            {
-                text: "카페 일 끝나고 같이 도망칠까? <br>아무도 우릴 모르는 곳으로.",
-                options: ["어디로?", "일은 어쩌고?", "좋아"],
-                replies: {
-                    "어디로?": "어디든. 바다가 보이는 곳이면 좋겠어. 수영도 하고.",
-                    "일은 어쩌고?": "바보. 일이 중요해, 내가 중요해? 그냥 다 터뜨리고 가자.",
-                    "좋아": "준비해 둬. 오늘 밤에 데리러 갈 테니까."
-                }
-            }
+            { text: "비 그쳤어~☆ 산책 갈까?", options: ["좋아", "싫어"], replies: { "좋아": "그럼~ 밤의 학교 탐험하자~☆", "싫어": "BOOM☆" } },
+            { text: "덴지 군, 학교 같은 건 땡땡이치고 나랑 도망치지 않을래?", options: ["갈래", "안돼"], replies: { "갈래": "와타시가 젠부 오시에테아게루(내가 전부 가르쳐줄게)", "안돼": "으엣?! 바보." } },
+            { text: "와타시... 덴지 군가 스키다카라(좋아하니까)...", options: ["나도", "거짓말"], replies: { "나도": "신지라레나이(믿을 수 없어)... 기뻐.", "거짓말": "들켰네? 펑☆" } },
+            { text: "으에? 나보다 빨리 왔잖아~? 어떻게 한 거야?", options: ["비밀", "뛰었어"], replies: { "비밀": "헤이헤이☆ 마스터☆ 얘한테 독약 커피를.", "뛰었어": "아시하야!(발 빠르네)" } },
+            { text: "이이쟈 나이데스카~ 아사바카리 갸쿠 코나인다시~", options: ["위험해", "괜찮아"], replies: { "위험해": "겁쟁이.", "괜찮아": "그렇지? 후훗." } }
         ];
 
-
-        let queue = [];
+        // ============================================================
+        // 3. 게임 로직 (스파르타 모드 적용)
+        // ============================================================
+        
+        let currentQuestionIndex = -1;
+        let currentMode = 'chat'; // 'chat' or 'quiz'
         let currentQ = null;
-        let wrongAttempts = 0;
-        let totalWrong = 0;
-        let isChatting = false;
+        let waitingForAnswer = false; // 정답을 기다리는 중 (오답 시 true 유지)
 
-        function startGame() {
-            queue = JSON.parse(JSON.stringify(questionBank));
-            queue.sort(() => Math.random() - 0.5);
-            
-            document.getElementById('start-screen').classList.add('hidden');
-            setTimeout(() => {
-                addMessage('reze', "좋아. 그럼 시작하자. 딴짓하면 죽어?");
-                setTimeout(() => nextStep(), 1000);
-            }, 500);
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const optionsBox = document.getElementById('options-box');
+        const textInputBox = document.getElementById('text-input-box');
+
+        // 초기화: 문제에 레제 대사 입히기
+        function initData() {
+            questionBank.forEach((q, index) => {
+                q.intro = rezeLines.intros[index % rezeLines.intros.length];
+                q.correct = rezeLines.corrects[index % rezeLines.corrects.length];
+                q.wrong = rezeLines.wrongs[index % rezeLines.wrongs.length];
+            });
+            // 문제 셔플
+            questionBank.sort(() => Math.random() - 0.5);
         }
 
-        function showTyping() {
-            const typing = document.getElementById('typing');
-            const chatBox = document.getElementById('chat-box');
-            chatBox.appendChild(typing);
-            typing.style.display = 'block';
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        function hideTyping() {
-            document.getElementById('typing').style.display = 'none';
-        }
-
-        function addMessage(type, text, isHTML = false) {
-            const chatBox = document.getElementById('chat-box');
+        // 메시지 출력 함수
+        function addMessage(sender, text) {
             const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${type}`;
-
-            let innerContent = '';
-            if (type === 'reze') {
-                innerContent += `<img src="images-2.jpeg" class="profile-pic-chat">`;
-            }
-            
-            innerContent += `<div class="bubble">${text}</div>`;
-            
-            msgDiv.innerHTML = innerContent;
+            msgDiv.classList.add('message');
+            msgDiv.classList.add(sender); // 'reze', 'user', 'system'
+            msgDiv.innerHTML = text;
             chatBox.appendChild(msgDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        function nextStep() {
-            if (queue.length === 0) {
-                showEnding();
-                return;
-            }
-
-            if (!isChatting && Math.random() < 0.2 && queue.length < questionBank.length - 1) {
-                triggerSmallTalk();
-            } else {
-                nextQuestion();
-            }
-        }
-
-        function triggerSmallTalk() {
-            isChatting = true;
-            const episode = chatEpisodes[Math.floor(Math.random() * chatEpisodes.length)];
+        // 게임 시작
+        function startGame() {
+            initData();
+            addMessage('system', "Reze's Biology Class에 오신 것을 환영합니다.");
+            addMessage('reze', "안녕? 덴지 군. 오늘 수업은 내가 할 거야. <br>테지나~?☆ (마술~?☆)");
             
-            showTyping();
             setTimeout(() => {
-                hideTyping();
-                addMessage('reze', episode.text);
-                
-                setTimeout(() => {
-                    const chatBox = document.getElementById('chat-box');
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'options-container';
-                    
-                    let buttonsHTML = "";
-                    episode.options.forEach(opt => {
-                        buttonsHTML += `<button class="option-btn" onclick="handleChatReply(this, '${episode.replies[opt]}', '${opt}')">${opt}</button>`;
-                    });
-                    
-                    wrapper.innerHTML = buttonsHTML;
-                    chatBox.appendChild(wrapper);
-                    chatBox.scrollTop = chatBox.scrollHeight;
-                    enableInput(false);
-                }, 500);
-            }, 1000);
-        }
-
-        window.handleChatReply = function(btn, replyText, userText) {
-            const container = btn.parentElement;
-            const buttons = container.querySelectorAll('.option-btn');
-            buttons.forEach(b => {
-                b.disabled = true;
-                b.style.opacity = '0.5';
-            });
-            btn.style.backgroundColor = 'var(--accent-color)';
-            btn.style.color = 'black';
-            btn.style.opacity = '1';
-
-            addMessage('user', userText);
-            
-            showTyping();
-            setTimeout(() => {
-                hideTyping();
-                addMessage('reze', replyText);
-                isChatting = false;
-                setTimeout(() => nextStep(), 1500);
-            }, 1000);
-        };
-
-        function nextQuestion() {
-            if (queue.length === 0) {
-                showEnding();
-                return;
-            }
-
-            currentQ = queue.shift();
-            wrongAttempts = 0;
-            
-            showTyping();
-            setTimeout(() => {
-                hideTyping();
-                addMessage('reze', currentQ.intro);
-                
-                setTimeout(() => {
-                    const questionHTML = `
-                        <div class="question-card">
-                            <span class="question-tag">QUESTION ${questionBank.length - queue.length}</span>
-                            <div class="question-text">[${currentQ.category}]<br>${currentQ.question}</div>
-                        </div>
-                    `;
-                    addMessage('reze', questionHTML, true);
-                    enableInput(true);
-                }, 800);
-            }, 1000);
-        }
-
-        function checkAnswer(optionValue = null) {
-            const inputEl = document.getElementById('answer-input');
-            const val = optionValue || inputEl.value.trim();
-            
-            if (!val) return;
-
-            addMessage('user', val);
-            inputEl.value = "";
-            enableInput(false);
-
-            const cleanVal = val.toLowerCase().replace(/s/g, '');
-            const isCorrect = currentQ.answers.some(ans => ans.toLowerCase().replace(/s/g, '') === cleanVal);
-
-            showTyping();
-
-            setTimeout(() => {
-                hideTyping();
-                if (isCorrect) {
-                    addMessage('reze', currentQ.correct);
-                    setTimeout(() => nextStep(), 1000);
-                } else {
-                    handleWrongAnswer(cleanVal);
-                }
-            }, 800);
-        }
-
-        function handleWrongAnswer(userAnswer) {
-            wrongAttempts++;
-            totalWrong++;
-            
-            // 맥락에 맞는 오답 처리
-            let specificWrongMsg = currentQ.wrong; // 기본 오답 메시지
-            if (currentQ.wrong_context) {
-                for (const key in currentQ.wrong_context) {
-                    if (userAnswer.includes(key)) {
-                        specificWrongMsg = currentQ.wrong_context[key];
-                        break;
-                    }
-                }
-            }
-            
-            addMessage('reze', specificWrongMsg);
-
-            if (wrongAttempts >= 2) {
-                setTimeout(() => {
-                    showTyping();
-                    setTimeout(() => {
-                        hideTyping();
-                        addMessage('reze', "하아... 힌트 줄게. 골라봐.");
-                        showOptions();
-                    }, 800);
-                }, 500);
-            } else {
-                enableInput(true);
-            }
-        }
-
-        function showOptions() {
-            const shuffledOptions = [...currentQ.options].sort(() => Math.random() - 0.5);
-            let buttonsHTML = "";
-            shuffledOptions.forEach(opt => {
-                buttonsHTML += `<button class="option-btn" onclick="selectQuizOption('${opt}', this)">${opt}</button>`;
-            });
-            
-            const chatBox = document.getElementById('chat-box');
-            const wrapper = document.createElement('div');
-            wrapper.className = 'options-container';
-            wrapper.innerHTML = buttonsHTML;
-            
-            chatBox.appendChild(wrapper);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        window.selectQuizOption = function(val, btnElement) {
-            const buttons = document.querySelectorAll('.option-btn');
-            buttons.forEach(b => {
-                b.disabled = true;
-                b.style.opacity = '0.5';
-            });
-            btnElement.style.backgroundColor = 'var(--accent-color)';
-            btnElement.style.color = 'black';
-            btnElement.style.opacity = '1';
-            
-            checkAnswer(val);
-        };
-
-        function enableInput(enable) {
-            const input = document.getElementById('answer-input');
-            const btn = document.getElementById('send-btn');
-            input.disabled = !enable;
-            btn.disabled = !enable;
-            if(enable) input.focus();
-        }
-
-        function showEnding() {
-            let finalMsg = "";
-            if (totalWrong === 0) {
-                finalMsg = "거짓말... 완벽해. <br>좋아. 오늘 밤은 네가 하고 싶은 대로 해. 🔥";
-            } else if (totalWrong <= 10) {
-                finalMsg = `끝났네. ${totalWrong}번 실수했지만...<br>귀여우니까 봐줄게. 카페에서 기다릴게.`;
-            } else {
-                finalMsg = "펑! 💣<br>도시 쥐는 역시 안 되네. <br>잘 가.";
-            }
-            
-            showTyping();
-            setTimeout(() => {
-                hideTyping();
-                addMessage('reze', finalMsg);
-                document.getElementById('answer-input').placeholder = "대화가 종료되었습니다.";
+                nextEvent();
             }, 1500);
         }
+
+        // 다음 이벤트 결정 (채팅 or 문제)
+        function nextEvent() {
+            waitingForAnswer = false;
+            // 70% 확률로 문제, 30% 확률로 채팅
+            if (Math.random() > 0.3) {
+                currentMode = 'quiz';
+                currentQuestionIndex = (currentQuestionIndex + 1) % questionBank.length;
+                currentQ = questionBank[currentQuestionIndex];
+                renderQuestion();
+            } else {
+                currentMode = 'chat';
+                renderChat();
+            }
+        }
+
+        // 문제 출력
+        function renderQuestion() {
+            // 1. Intro 대사
+            addMessage('reze', `[${currentQ.category}]<br>${currentQ.intro}`);
+            
+            setTimeout(() => {
+                // 2. 문제 내용
+                addMessage('reze', `<span style="color:#bb86fc; font-weight:bold;">Q. ${currentQ.question}</span>`);
+                
+                // 3. 입력 방식 결정 (랜덤: 객관식 or 주관식)
+                // 단, 이전에 틀려서 재도전 중이라면 기존 방식 유지해야 하지만, 여기서는 새 문제이므로 랜덤.
+                const isMultipleChoice = Math.random() > 0.4; 
+
+                if (isMultipleChoice) {
+                    showOptions(currentQ.options);
+                } else {
+                    showTextInput();
+                }
+                waitingForAnswer = true;
+            }, 1000);
+        }
+
+        // 채팅 출력
+        function renderChat() {
+            const episode = chatEpisodes[Math.floor(Math.random() * chatEpisodes.length)];
+            currentQ = episode; // 임시 저장
+            
+            addMessage('reze', episode.text);
+            showOptions(episode.options, true); // true = 채팅 모드
+        }
+
+        // UI 제어: 객관식 보기
+        function showOptions(options, isChat = false) {
+            textInputBox.classList.add('hidden');
+            optionsBox.classList.remove('hidden');
+            optionsBox.innerHTML = '';
+
+            // 보기 셔플 (채팅 제외)
+            const displayOptions = isChat ? options : [...options].sort(() => Math.random() - 0.5);
+
+            displayOptions.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => handleInput(opt, isChat);
+                optionsBox.appendChild(btn);
+            });
+        }
+
+        // UI 제어: 주관식 입력
+        function showTextInput() {
+            optionsBox.classList.add('hidden');
+            textInputBox.classList.remove('hidden');
+            userInput.value = '';
+            userInput.focus();
+        }
+
+        // 입력 처리 핸들러
+        function handleInput(text, isChat) {
+            addMessage('user', text);
+
+            if (isChat) {
+                // 채팅 응답 처리
+                const reply = currentQ.replies[text] || "흐음...";
+                setTimeout(() => {
+                    addMessage('reze', reply);
+                    setTimeout(nextEvent, 1500);
+                }, 500);
+            } else {
+                // 문제 정답 처리
+                checkAnswer(text);
+            }
+        }
+
+        // 정답 확인 로직 (스파르타: 틀리면 안 넘어감)
+        function checkAnswer(input) {
+            // 정답 체크 (공백 제거, 소문자 변환 비교)
+            const isCorrect = currentQ.answers.some(ans => 
+                ans.replace(/s/g, '').toLowerCase() === input.replace(/s/g, '').toLowerCase()
+            );
+
+            if (isCorrect) {
+                // 정답!
+                setTimeout(() => {
+                    addMessage('reze', `<span style="color:#00ff00">O</span> ${currentQ.correct}`);
+                    setTimeout(nextEvent, 1500);
+                }, 500);
+            } else {
+                // 오답! -> 넘어가지 않음 (Loop)
+                setTimeout(() => {
+                    // 1. 오답 대사 (랜덤 추가)
+                    const randWrong = rezeLines.wrongs[Math.floor(Math.random() * rezeLines.wrongs.length)];
+                    addMessage('reze', `<span style="color:var(--danger-color)">X</span> ${currentQ.wrong}`);
+                    
+                    // 2. 힌트 제공 (만약 wrong_context에 키워드가 있다면)
+                    let hintMsg = "";
+                    if (currentQ.wrong_context) {
+                        for (const key in currentQ.wrong_context) {
+                            if (input.includes(key)) {
+                                hintMsg = `<br>Hint: ${currentQ.wrong_context[key]}`;
+                            }
+                        }
+                    }
+                    if (hintMsg) addMessage('reze', hintMsg);
+                    else addMessage('reze', `다시 해봐. ${randWrong}`);
+
+                    // 3. 다시 입력 유도
+                    // 주관식이면 값만 비우고, 객관식이면 그대로 둠
+                    if (!textInputBox.classList.contains('hidden')) {
+                        userInput.value = '';
+                        userInput.focus();
+                        userInput.placeholder = "다시 입력해... (기회는 없어)";
+                    }
+                }, 500);
+            }
+        }
+
+        // 이벤트 리스너
+        sendBtn.addEventListener('click', () => {
+            if (userInput.value.trim() !== "") {
+                handleInput(userInput.value.trim(), false);
+            }
+        });
+
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && userInput.value.trim() !== "") {
+                handleInput(userInput.value.trim(), false);
+            }
+        });
+
+        // 게임 시작 실행
+        window.onload = startGame;
+
     </script>
 </body>
 </html>
