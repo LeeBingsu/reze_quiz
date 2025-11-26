@@ -27,7 +27,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            overflow: hidden; /* 스크롤 방지 */
+            overflow: hidden;
         }
 
         /* CRT 모니터 효과 */
@@ -245,7 +245,7 @@
 
     <script>
         // ============================================================
-        // 1. 레제 대사 데이터 (캐릭터성 강화)
+        // 1. 레제 대사 데이터
         // ============================================================
         const rezeLines = {
             intros: [
@@ -507,13 +507,16 @@
         ];
 
         // ============================================================
-        // 3. 게임 로직 (스파르타 모드 적용)
+        // 3. 게임 로직 (스파르타 모드 + 2회 오답 시 보기 제공)
         // ============================================================
         
         let currentQuestionIndex = -1;
-        let currentMode = 'chat'; // 'chat' or 'quiz'
+        let currentMode = 'chat'; 
         let currentQ = null;
-        let waitingForAnswer = false; // 정답을 기다리는 중 (오답 시 true 유지)
+        let waitingForAnswer = false; 
+        
+        // 추가된 변수: 틀린 횟수 추적
+        let wrongCount = 0; 
 
         const chatBox = document.getElementById('chat-box');
         const userInput = document.getElementById('user-input');
@@ -521,7 +524,7 @@
         const optionsBox = document.getElementById('options-box');
         const textInputBox = document.getElementById('text-input-box');
 
-        // 초기화: 문제에 레제 대사 입히기
+        // 초기화
         function initData() {
             questionBank.forEach((q, index) => {
                 q.intro = rezeLines.intros[index % rezeLines.intros.length];
@@ -553,9 +556,11 @@
             }, 1500);
         }
 
-        // 다음 이벤트 결정 (채팅 or 문제)
+        // 다음 이벤트 결정
         function nextEvent() {
             waitingForAnswer = false;
+            wrongCount = 0; // 새 문제 시작 시 오답 카운트 리셋
+
             // 70% 확률로 문제, 30% 확률로 채팅
             if (Math.random() > 0.3) {
                 currentMode = 'quiz';
@@ -570,16 +575,14 @@
 
         // 문제 출력
         function renderQuestion() {
-            // 1. Intro 대사
             addMessage('reze', `[${currentQ.category}]<br>${currentQ.intro}`);
             
             setTimeout(() => {
-                // 2. 문제 내용
                 addMessage('reze', `<span style="color:#bb86fc; font-weight:bold;">Q. ${currentQ.question}</span>`);
                 
-                // 3. 입력 방식 결정 (랜덤: 객관식 or 주관식)
-                // 단, 이전에 틀려서 재도전 중이라면 기존 방식 유지해야 하지만, 여기서는 새 문제이므로 랜덤.
-                const isMultipleChoice = Math.random() > 0.4; 
+                // 2번 이상 틀렸던 이력이 있는 게 아니니, 기본은 랜덤 or 주관식
+                // 여기서는 일단 주관식 위주로 가되, 랜덤성을 둠
+                const isMultipleChoice = Math.random() > 0.5; 
 
                 if (isMultipleChoice) {
                     showOptions(currentQ.options);
@@ -593,19 +596,18 @@
         // 채팅 출력
         function renderChat() {
             const episode = chatEpisodes[Math.floor(Math.random() * chatEpisodes.length)];
-            currentQ = episode; // 임시 저장
+            currentQ = episode; 
             
             addMessage('reze', episode.text);
-            showOptions(episode.options, true); // true = 채팅 모드
+            showOptions(episode.options, true); 
         }
 
-        // UI 제어: 객관식 보기
+        // UI: 객관식 보기
         function showOptions(options, isChat = false) {
             textInputBox.classList.add('hidden');
             optionsBox.classList.remove('hidden');
             optionsBox.innerHTML = '';
 
-            // 보기 셔플 (채팅 제외)
             const displayOptions = isChat ? options : [...options].sort(() => Math.random() - 0.5);
 
             displayOptions.forEach(opt => {
@@ -617,7 +619,7 @@
             });
         }
 
-        // UI 제어: 주관식 입력
+        // UI: 주관식 입력
         function showTextInput() {
             optionsBox.classList.add('hidden');
             textInputBox.classList.remove('hidden');
@@ -625,44 +627,43 @@
             userInput.focus();
         }
 
-        // 입력 처리 핸들러
+        // 입력 핸들러
         function handleInput(text, isChat) {
             addMessage('user', text);
 
             if (isChat) {
-                // 채팅 응답 처리
                 const reply = currentQ.replies[text] || "흐음...";
                 setTimeout(() => {
                     addMessage('reze', reply);
                     setTimeout(nextEvent, 1500);
                 }, 500);
             } else {
-                // 문제 정답 처리
                 checkAnswer(text);
             }
         }
 
-        // 정답 확인 로직 (스파르타: 틀리면 안 넘어감)
+        // 정답 체크 로직 (변경됨: 2번 틀리면 객관식 전환)
         function checkAnswer(input) {
-            // 정답 체크 (공백 제거, 소문자 변환 비교)
+            // 정답 판별 (공백 제거, 소문자)
             const isCorrect = currentQ.answers.some(ans => 
                 ans.replace(/s/g, '').toLowerCase() === input.replace(/s/g, '').toLowerCase()
             );
 
             if (isCorrect) {
-                // 정답!
+                // 정답 처리
                 setTimeout(() => {
                     addMessage('reze', `<span style="color:#00ff00">O</span> ${currentQ.correct}`);
                     setTimeout(nextEvent, 1500);
                 }, 500);
             } else {
-                // 오답! -> 넘어가지 않음 (Loop)
+                // 오답 처리
+                wrongCount++; // 틀린 횟수 증가
+                
                 setTimeout(() => {
-                    // 1. 오답 대사 (랜덤 추가)
                     const randWrong = rezeLines.wrongs[Math.floor(Math.random() * rezeLines.wrongs.length)];
                     addMessage('reze', `<span style="color:var(--danger-color)">X</span> ${currentQ.wrong}`);
                     
-                    // 2. 힌트 제공 (만약 wrong_context에 키워드가 있다면)
+                    // 힌트 찾기
                     let hintMsg = "";
                     if (currentQ.wrong_context) {
                         for (const key in currentQ.wrong_context) {
@@ -671,21 +672,28 @@
                             }
                         }
                     }
+
                     if (hintMsg) addMessage('reze', hintMsg);
                     else addMessage('reze', `다시 해봐. ${randWrong}`);
 
-                    // 3. 다시 입력 유도
-                    // 주관식이면 값만 비우고, 객관식이면 그대로 둠
-                    if (!textInputBox.classList.contains('hidden')) {
-                        userInput.value = '';
-                        userInput.focus();
-                        userInput.placeholder = "다시 입력해... (기회는 없어)";
+                    // [핵심 변경] 2번 이상 틀렸고, 현재 주관식 입력 중이라면 -> 객관식으로 전환
+                    if (wrongCount >= 2 && !textInputBox.classList.contains('hidden')) {
+                        setTimeout(() => {
+                            addMessage('reze', "www코도모다 코도모www (어린애네)<br>너무 못 맞추니까 보기를 줄게. 골라봐.");
+                            showOptions(currentQ.options); // 객관식 전환
+                        }, 1000);
+                    } else {
+                        // 아직 기회가 남았거나 이미 객관식인 경우
+                        if (!textInputBox.classList.contains('hidden')) {
+                            userInput.value = '';
+                            userInput.focus();
+                            userInput.placeholder = `틀린 횟수: ${wrongCount}... 다시 해봐`;
+                        }
                     }
                 }, 500);
             }
         }
 
-        // 이벤트 리스너
         sendBtn.addEventListener('click', () => {
             if (userInput.value.trim() !== "") {
                 handleInput(userInput.value.trim(), false);
@@ -698,7 +706,6 @@
             }
         });
 
-        // 게임 시작 실행
         window.onload = startGame;
 
     </script>
